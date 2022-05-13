@@ -23,7 +23,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
     constructor(){
         minCellCost = 0;
-        maxCellSize = 10;
+        maxCellSize = 0;
         cellPurchaseFeePercent = 10;
         contractFeePercent = 10;
     }
@@ -85,6 +85,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
     function updateMinCellPrice(uint256 newPrice) onlyOwner public{
         minCellCost = newPrice;
+    }
+
+    function getMinCellPrice() public view returns(uint256){
+        return minCellCost;
     }
 
     function getCellNewPrice(uint16 _x, uint16 _y) public view returns(uint256){

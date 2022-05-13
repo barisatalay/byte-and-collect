@@ -21,6 +21,8 @@ describe('ByteAndCollect', ()=>{
 
         await gameContract.updateMinCellPrice(minCellCost);
 
+        await gameContract.updateMaxCellSize(10);
+
         await gameContract.resetCellBalances();
     });
 
@@ -34,13 +36,14 @@ describe('ByteAndCollect', ()=>{
         it('Should work all function', async () => {
             let maxCellSize = await gameContract.getMaxCellSize();
             
+            let newPrice = await gameContract.getCellNewPrice(maxCellSize, maxCellSize);
+
             await gameContract.connect(user1).attackCell(maxCellSize, maxCellSize, {
                 value: ethers.utils.parseEther("0.01")
             });
 
-            let newPrice = await gameContract.getCellNewPrice(maxCellSize, maxCellSize);
             let lastPrice = await gameContract.getCellLastPrice(maxCellSize, maxCellSize);
-            expect(newPrice).to.not.eq(lastPrice);
+            expect(newPrice).to.eq(lastPrice);
         });
     });
 
@@ -66,7 +69,62 @@ describe('ByteAndCollect', ()=>{
             let lastCellPrice2 = await gameContract.getCellLastPrice(1,1);
             
             expect(newCellPrice1).to.eq(lastCellPrice2);
-        })
+        });
+
+        it ("Should reset all cell data to min cell price", async () => {
+            // Random cell    
+            
+            //let firstPrice = await gameContract.getCellLastPrice(5, 4);
+            let newPrice = await gameContract.getCellNewPrice(5, 4);
+            await gameContract.connect(user1).attackCell(5, 4, {
+                value: newPrice
+            });
+            newPrice = await gameContract.getCellNewPrice(5, 4);
+            await gameContract.connect(user2).attackCell(5, 4, {
+                value: newPrice
+            });
+
+            let lastCellPrice = await gameContract.getCellLastPrice(5, 4);
+            newPrice = await gameContract.getCellNewPrice(5, 4);
+
+            await gameContract.resetCellBalances();
+            let resetPrice = await gameContract.getCellLastPrice(5, 4);
+            
+            expect(resetPrice).to.not.eq(newPrice);
+            expect(resetPrice).to.not.eq(lastCellPrice);
+            expect(resetPrice).to.eq(ethers.utils.parseEther("0.01")); // Price of After reset
+        });
+    
+        it("Should min cell price change", async () => {
+            let firstMinCellPrice = await gameContract.getMinCellPrice();
+
+            expect(firstMinCellPrice).to.be.eq(minCellCost);
+
+            await gameContract.updateMinCellPrice(ethers.BigNumber.from("1000000000"));
+
+            let newMinCellPrice = await gameContract.getMinCellPrice();
+
+            expect(firstMinCellPrice).to.not.eq(newMinCellPrice);
+            expect(newMinCellPrice).to.be.eq(ethers.BigNumber.from("1000000000"));
+
+            await gameContract.updateMinCellPrice(minCellCost);
+            newMinCellPrice = await gameContract.getMinCellPrice();
+
+            expect(firstMinCellPrice).to.be.eq(newMinCellPrice);
+        });
+
+        it("Should max cell size change",async () => {
+            let firstMaxCellSize = await gameContract.getMaxCellSize();
+            await gameContract.updateMaxCellSize(20);
+            let newMaxCellSize = await gameContract.getMaxCellSize();
+
+            expect(firstMaxCellSize).to.not.eq(20);
+            expect(newMaxCellSize).to.be.eq(20);
+            
+            await gameContract.updateMaxCellSize(firstMaxCellSize);
+            newMaxCellSize = await gameContract.getMaxCellSize();
+            expect(newMaxCellSize).to.be.eq(firstMaxCellSize);
+        });
 
         /* 
         await expect(stakeContract.connect(user1).updateRewardPerSecond(poolRewardBanana.id, 0, updatedRewardPerSecond))
