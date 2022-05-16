@@ -2,9 +2,11 @@ import chai, { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { Contract, BigNumber } from "ethers";
-import { Console } from "console";
+import { solidity } from "ethereum-waffle";
 
-const minCellCost = ethers.BigNumber.from("10000000000000000");
+chai.use(solidity);
+
+const minCellCost : BigNumber = BigNumber.from("10000000000000000");
 
 describe('ByteAndCollect', ()=>{
     let gameContract: Contract;
@@ -12,17 +14,22 @@ describe('ByteAndCollect', ()=>{
     let user1: SignerWithAddress;
     let user2: SignerWithAddress;
 
-    before(async function () {
+    beforeEach(async function () {
         let Contract = await ethers.getContractFactory('ByteAndCollect');
         
         [owner, user1, user2] = await ethers.getSigners();
 
         gameContract = await Contract.deploy();
 
+        let maxCellSize = 10
+        let totalCell = maxCellSize * maxCellSize
+        let totalDeposit = minCellCost.mul(totalCell);
+
+        await gameContract.deposit( {
+            value: totalDeposit
+        });
         await gameContract.updateMinCellPrice(minCellCost);
-
-        await gameContract.updateMaxCellSize(10);
-
+        await gameContract.updateMaxCellSize(maxCellSize);
         await gameContract.resetCellBalances();
     });
 
@@ -44,6 +51,34 @@ describe('ByteAndCollect', ()=>{
 
             let lastPrice = await gameContract.getCellLastPrice(maxCellSize, maxCellSize);
             expect(newPrice).to.eq(lastPrice);
+        });
+    });
+
+    describe("Owner logics", ()=>{
+        it("Should deposit ether", async () => {
+            let depositBalance = await gameContract.getDepositBalance();
+            //console.log("depositBalance: " + depositBalance);
+            await gameContract.connect(owner).deposit( {
+                value: 100
+            });
+            let newDepositBalance = await gameContract.getDepositBalance();
+            //console.log("newDepositBalance: " + newDepositBalance);
+            expect(newDepositBalance).to.not.eq(depositBalance);
+            expect(newDepositBalance).to.be.eq(depositBalance.add(100));
+        });
+
+        it("Should widthdraw ether by owner wallet", async () => {
+            let contractFirstBalance = await gameContract.getDepositBalance();
+            let userFirstBalance = await owner.getBalance();
+            
+            await gameContract.connect(owner).withdraw();
+            let contractBalance = await gameContract.getDepositBalance();
+            let userBalance = await owner.getBalance();
+
+            expect(contractFirstBalance).to.not.eq(0);
+            expect(userFirstBalance).to.not.eq(0);
+            expect(contractBalance).to.be.eq(0);
+            expect(userBalance).to.not.eq(userFirstBalance);
         });
     });
 
