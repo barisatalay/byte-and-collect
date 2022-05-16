@@ -141,7 +141,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
         require(success, "Withdraw failed");
     }
     /// @notice ...
-    function hashCell(uint16 _x, uint16 _y)public pure returns(bytes memory b){
+    function hashCell(uint16 _x, uint16 _y)private pure returns(bytes memory b){
         b = new bytes(32);
         assembly {
             mstore(add(b, 32), _x)
