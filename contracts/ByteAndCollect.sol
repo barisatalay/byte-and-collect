@@ -12,9 +12,11 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
  * Note: Code that should be in the first line of methods that normal users access. require(emergency==false,"Operations canceled due to an emergency.");
  */
  contract ByteAndCollect is Context, Ownable{
+    using SafeMath for uint;
     mapping(uint16 => mapping(uint16 => address)) public cellOwner;
     mapping(uint16 => mapping(uint16 => uint256)) public cellPrice;
     mapping(address => uint) private ownerInfo;
+    mapping(bytes => bool) private mutexInfo;
     uint256 private balance;                // It is where the cell balances are located.
     uint256 private balanceFee;             // It is the commission balances that the contract receives from the transactions made.
     uint256 private minCellCost;            // ...
@@ -23,7 +25,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
     uint8 private contractFeePercent;       // It is the commission rate that the contract receives from the transactions made. It can be used for development and financing.
     bool private emergency;                 // It is used for the safety of users when an unexpected situation occurs.
 
-    using SafeMath for uint;
+    event CellConquered(uint16 indexed x, uint16 indexed y, address indexed newOwner, uint256 attackPrice);
+    event CellUnderAttack(uint16 indexed x, uint16 indexed y, address indexed newOwner, address oldOwner);
 
     constructor(){
         minCellCost = 0;
@@ -31,10 +34,10 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
         cellPurchaseFeePercent = 10;
         contractFeePercent = 10;
     }
-    /// @notice     ...
-    /// @param  _x  ...
-    /// @param  _y  ...
-    function attackCell(uint16 _x, uint16 _y) payable public{
+    /// @notice     Bu metod ile seçilen hücreyi kullanıcı satın alır(saldırır)
+    /// @param  _x  Horizontal position
+    /// @param  _y  Vertical position
+    function attackCell(uint16 _x, uint16 _y) checkLock(_x, _y) payable public{
         require(emergency==false,"Operations canceled due to an emergency.");
         require(_x>0&& _y>0 && _x <=maxCellSize && _y<=maxCellSize, "Selected cell is not valid.");
         require(cellOwner[_x][_y]!=_msgSender(),"You cannot attack your own cell.");
@@ -43,6 +46,7 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
         uint256 calculatedCellPrice = calculateNewCellPrice(cellPrice[_x][_y], cellPurchaseFeePercent);
         require(msg.value>=calculatedCellPrice, "Amout must be bigger than cell purchase price");
 
+        emit CellUnderAttack(_x, _y, _msgSender(), cellOwner[_x][_y]);
         // ..:: Gaming Fee ::..
         uint256 calculatedContractFee = calculateContractFee(calculatedCellPrice, contractFeePercent);
         balanceFee = balanceFee.add(calculatedContractFee);
@@ -58,15 +62,17 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
         cellOwner[_x][_y] = _msgSender();
         cellPrice[_x][_y] = calculatedCellPrice;
         // ..:: Updating cell information ::..
+
+        emit CellConquered(_x, _y, _msgSender(), calculatedCellPrice);
     }
-    /// @notice                 ...
+    /// @notice                 Calculates the commission share for the development of the contract and the investments it will make.
     /// @param  _cellLastPrice  Purchased last price by user
     /// @param  _feePercent     New cell attack fee
     function calculateNewCellPrice(uint _cellLastPrice, uint8 _feePercent)private pure returns(uint){
         uint comission = _cellLastPrice.mul(_feePercent).div(100);
         return comission + _cellLastPrice;
     }
-    /// @notice                 ...
+    /// @notice                 
     /// @param  _cellPrice      Calculated cell purchase price
     /// @param  _feePercent     Playing Fee percent
     function calculateContractFee(uint256 _cellPrice, uint8 _feePercent)private pure returns(uint256){
@@ -86,40 +92,40 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
             }
         }
     }
-    /// @notice             ...
-    /// @param  newPrice    ...
-    function updateMinCellPrice(uint256 newPrice) onlyOwner public{
-        minCellCost = newPrice;
+    /// @notice             Updates empty(non-owner) cell price
+    /// @param  _newPrice    New price of empty(non-owner) cell
+    function updateMinCellPrice(uint256 _newPrice) onlyOwner public{
+        minCellCost = _newPrice;
     }
-    /// @notice ...
+    /// @notice Shows empty(non-owner) cell price
     function getMinCellPrice() public view returns(uint256){
         return minCellCost;
     }
-    /// @notice         ...
-    /// @param  _x      ...
-    /// @param  _y      ...
+    /// @notice         Shows purchase(attack) cost of the selected cell
+    /// @param  _x      Horizontal position
+    /// @param  _y      Vertical position
     function getCellNewPrice(uint16 _x, uint16 _y) public view returns(uint256){
         return calculateNewCellPrice(cellPrice[_x][_y], cellPurchaseFeePercent);
     }
-    /// @notice         ...
-    /// @param  _x      ...
-    /// @param  _y      ...
+    /// @notice         Shows selected cell's last purchased(attacked) price
+    /// @param  _x      Horizontal position
+    /// @param  _y      Vertical position
     function getCellLastPrice(uint16 _x, uint16 _y) public view returns(uint256){
         return cellPrice[_x][_y];
     }
-    /// @notice ...
-    function updateMaxCellSize(uint16 value) onlyOwner public {
-        maxCellSize = value;
+    /// @notice         The size of the playground is updated here.
+    /// @param _value   New maximum cell size.
+    function updateMaxCellSize(uint16 _value) onlyOwner public {
+        maxCellSize = _value;
     }
-    /// @notice ...
+    /// @notice Maximum cell size. E.g.: 10x10
     function getMaxCellSize() public view returns(uint16) {
         return maxCellSize;
     }
-    /// @notice ...
+    /// @notice Shows contract deposit balance
     function getDepositBalance() public view returns(uint256){
         return balance;
     }
-
     /// @notice It is used for administrators to load balance.
     function deposit() onlyOwner public payable {
         require(msg.value>0,"There is balance zero");
@@ -133,5 +139,22 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
         balance = 0;
         (bool success, ) = _msgSender().call{value: amount}("");
         require(success, "Withdraw failed");
+    }
+    /// @notice ...
+    function hashCell(uint16 _x, uint16 _y)public pure returns(bytes memory b){
+        b = new bytes(32);
+        assembly {
+            mstore(add(b, 32), _x)
+            mstore(add(b, 16), _y)
+            mstore(b, 32)
+        }
+    }
+    //TODO Will calculate gas fee
+    modifier checkLock(uint16 _x, uint16 _y){
+        bytes memory hashed = hashCell(_x, _y);
+        require(mutexInfo[hashed]==false, "The cell is already under attack. Please wait.");
+        mutexInfo[hashed] = true;
+        _;
+        mutexInfo[hashed] = false;
     }
  }
