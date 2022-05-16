@@ -160,7 +160,27 @@ describe('ByteAndCollect', ()=>{
             newMaxCellSize = await gameContract.getMaxCellSize();
             expect(newMaxCellSize).to.be.eq(firstMaxCellSize);
         });
+        it("Should two user attack one cell",async () => {
+            let newCellPrice, ethValue;
+            for (let index = 1; index < 11; index++) {
+                // console.log("Times: " + index);
+                newCellPrice = await gameContract.getCellNewPrice(1,1);
+                ethValue = ethers.utils.formatEther(newCellPrice);
+                ethValue = (+ethValue).toFixed(4);
+                // console.log("Purchase Price: " + ethValue + " ETH ");
+                // console.log("User1 attacking");
 
+                await gameContract.connect(user1).attackCell(1,1, {value: newCellPrice});
+
+                newCellPrice = await gameContract.getCellNewPrice(1,1);
+                // ethValue = ethers.utils.formatEther(newCellPrice);
+                // ethValue = (+ethValue).toFixed(4);
+                // console.log("Purchase Price: " + ethValue + " ETH ");
+                // console.log("User2 attacking:");
+                
+                await gameContract.connect(user2).attackCell(1,1, {value: newCellPrice});
+            }
+        });
         /* 
         await expect(stakeContract.connect(user1).updateRewardPerSecond(poolRewardBanana.id, 0, updatedRewardPerSecond))
                 .to.be
