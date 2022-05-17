@@ -209,5 +209,42 @@ describe('ByteAndCollect', ()=>{
                 .to.be
                 .revertedWith('Selected cell is not valid.');
         });
+
+        it("Same user cannot re-attack own cell", async() => {
+            let newCellPrice = await gameContract.getCellNewPrice(1,1);
+            await gameContract.connect(user1).attackCell(1, 1, {value: newCellPrice});
+
+            let lastCellPrice = await gameContract.getCellNewPrice(1,1);
+            
+            await expect(gameContract.connect(user1).attackCell(1, 1, {value: newCellPrice}))
+                .to.be
+                .revertedWith('You cannot attack your own cell.');
+
+            newCellPrice = await gameContract.getCellNewPrice(1,1);
+
+            expect(newCellPrice).to.be.eq(lastCellPrice);
+        });
+
+        it("Should owner use contract specific methods, no one else", async() => {
+            await expect(gameContract.connect(user1).deposit())
+            .to.be
+            .revertedWith('Ownable: caller is not the owner');
+
+            await expect(gameContract.connect(user2).withdraw())
+            .to.be
+            .revertedWith('Ownable: caller is not the owner');
+
+            await expect(gameContract.connect(user1).updateMaxCellSize(1000))
+            .to.be
+            .revertedWith('Ownable: caller is not the owner');
+
+            await expect(gameContract.connect(user2).updateMinCellPrice(ethers.BigNumber.from("1000000000")))
+            .to.be
+            .revertedWith('Ownable: caller is not the owner');
+
+            await expect(gameContract.connect(user2).resetCellBalances())
+            .to.be
+            .revertedWith('Ownable: caller is not the owner');
+        });
     });
 });
