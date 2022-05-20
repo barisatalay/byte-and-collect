@@ -26,7 +26,14 @@ async function main() {
 
     await gameContract.resetCellBalances();
     console.log("Cell balances reset");
-
+    
+    /*await web3.eth.sendTransaction({
+        from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+        to: "0xc07f279c6aCd79Fc63752aE917b052780B0Ca132",
+        value: minCellCost,
+      });
+    */
+    //0xc07f279c6aCd79Fc63752aE917b052780B0Ca132
   }
   
 main()
@@ -37,7 +44,7 @@ main()
 });
 
 /*
-Start a local node
+Start a local node : http://127.0.0.1:8545/
 
 npx hardhat node
 

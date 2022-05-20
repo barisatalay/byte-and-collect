@@ -85,8 +85,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
     }
     /// @notice ...
     function resetCellBalances() onlyOwner public{
-        for (uint16 i=1; i<maxCellSize; i++){
-            for (uint16 j=1; j<maxCellSize; j++) {
+        for (uint16 i=1; i<=maxCellSize; i++){
+            for (uint16 j=1; j<=maxCellSize; j++) {
                 cellOwner[i][j] = address(this);
                 cellPrice[i][j] = minCellCost;
             }
