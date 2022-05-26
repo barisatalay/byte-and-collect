@@ -1,47 +1,52 @@
-
 async function main() {
-    // We get the contract to deploy
-    const Contract = await ethers.getContractFactory("ByteAndCollect");
-    const gameContract = await Contract.deploy();
-  
-    await gameContract.deployed();
-  
-    console.log("Contract deployed to: ", gameContract.address);
+  // We get the contract to deploy
+  const Contract = await ethers.getContractFactory("ByteAndCollect");
+  const gameContract = await Contract.deploy();
 
-    let maxCellSize = 10
-    let minCellCost = 10000000000
-    let totalCell = maxCellSize * maxCellSize
-    let totalDeposit = minCellCost * totalCell;
+  await gameContract.deployed();
 
-    await gameContract.deposit( {
-        value: totalDeposit
-    });
-    console.log("Ether sent: ", totalDeposit);
+  console.log("Contract deployed to: ", gameContract.address);
 
-    await gameContract.updateMinCellPrice(minCellCost);
-    console.log("Min. cell price updated: ", minCellCost);
+  let maxCellSize = 10;
+  let minCellCost = "10000000000000000";
+  let totalCell = maxCellSize * maxCellSize;
+  let totalDeposit = "100000000000000000000";
 
-    await gameContract.updateMaxCellSize(maxCellSize);
-    console.log("Max. cell size updated: ", maxCellSize);
+  await gameContract.deposit({
+    value: totalDeposit,
+  });
+  console.log("Ether sent: ", totalDeposit);
 
-    await gameContract.resetCellBalances();
-    console.log("Cell balances reset");
-    
-    /*await web3.eth.sendTransaction({
+  await gameContract.updateMinCellPrice(minCellCost);
+  let newMinCellPrice = await gameContract.getMinCellPrice();
+
+  console.log("New Min. cell price updated: ", newMinCellPrice);
+
+  await gameContract.updateMaxCellSize(maxCellSize);
+  console.log("Max. cell size updated: ", maxCellSize);
+  console.log("Total Cell Count: ", totalCell);
+
+  await gameContract.resetCellBalances();
+  console.log("Cell balances reset");
+
+  const randomCellPrice = await gameContract.getCellLastPrice(0, 0);
+  console.log("0x0 Cell price: " + randomCellPrice);
+
+  /*await web3.eth.sendTransaction({
         from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
         to: "0xc07f279c6aCd79Fc63752aE917b052780B0Ca132",
         value: minCellCost,
       });
     */
-    //0xc07f279c6aCd79Fc63752aE917b052780B0Ca132
-  }
-  
+  //0xc07f279c6aCd79Fc63752aE917b052780B0Ca132
+}
+
 main()
-.then(() => process.exit(0))
-.catch((error) => {
+  .then(() => process.exit(0))
+  .catch((error) => {
     console.error(error);
     process.exit(1);
-});
+  });
 
 /*
 Start a local node : http://127.0.0.1:8545/

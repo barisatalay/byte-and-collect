@@ -46,7 +46,7 @@ describe('ByteAndCollect', ()=>{
             let newPrice = await gameContract.getCellNewPrice(maxCellSize, maxCellSize);
 
             await gameContract.connect(user1).attackCell(maxCellSize, maxCellSize, {
-                value: ethers.utils.parseEther("0.01")
+                value: newPrice
             });
 
             let lastPrice = await gameContract.getCellLastPrice(maxCellSize, maxCellSize);
@@ -180,6 +180,12 @@ describe('ByteAndCollect', ()=>{
                 
                 await gameContract.connect(user2).attackCell(1,1, {value: newCellPrice});
             }
+        });
+
+        it("Should batch data get",async () => {
+            await gameContract.updateMaxCellSize(10);
+            const a = await gameContract.getCellBatch();
+            console.log(a);
         });
         /* 
         await expect(stakeContract.connect(user1).updateRewardPerSecond(poolRewardBanana.id, 0, updatedRewardPerSecond))
