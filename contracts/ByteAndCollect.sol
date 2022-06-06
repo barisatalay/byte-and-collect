@@ -64,7 +64,7 @@ contract ByteAndCollect is Context, Ownable {
     {
         require(emergency == false, "Operations canceled due to an emergency.");
         require(
-            _x >= 0 && _y >= 0 && _x <= maxCellSize && _y <= maxCellSize,
+            _x >= 0 && _y >= 0 && _x < maxCellSize && _y < maxCellSize,
             "Selected cell is not valid."
         );
         require(
@@ -193,15 +193,6 @@ contract ByteAndCollect is Context, Ownable {
                     price: cellPrice[_x][_y],
                     newPrice: getCellNewPrice(_x, _y)
                 });
-                /*response[_x][_y] = CellInfo({
-                    x: _x,
-                    y: _y,
-                    price: cellPrice[_x][_y],
-                    newPrice: getCellNewPrice(_x, _y)
-                });
-                */
-                // cellOwner[i][j] = address(this);
-                // cellPrice[i][j] = minCellCost;
             }
             response[_x] = cellData;
         }

@@ -1,5 +1,6 @@
 import "@nomiclabs/hardhat-waffle";
 import "@nomiclabs/hardhat-web3";
+import "hardhat-gas-reporter"
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -13,5 +14,10 @@ module.exports = {
         runs: 1000
       }
     }
+  },
+  gasReporter: {
+    currency: 'USD',
+    gasPrice: 21,
+    //enabled: (process.env.REPORT_GAS) ? true : false
   }
 };

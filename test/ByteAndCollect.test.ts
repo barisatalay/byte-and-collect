@@ -42,14 +42,15 @@ describe('ByteAndCollect', ()=>{
         });
         it('Should work all function', async () => {
             let maxCellSize = await gameContract.getMaxCellSize();
-            
-            let newPrice = await gameContract.getCellNewPrice(maxCellSize, maxCellSize);
-
-            await gameContract.connect(user1).attackCell(maxCellSize, maxCellSize, {
+            const x = maxCellSize - 1;
+            const y = maxCellSize - 1;
+            let newPrice = await gameContract.getCellNewPrice(x, y);
+            console.log("New price: " + newPrice);
+            await gameContract.connect(user1).attackCell(x, y, {
                 value: newPrice
             });
 
-            let lastPrice = await gameContract.getCellLastPrice(maxCellSize, maxCellSize);
+            let lastPrice = await gameContract.getCellLastPrice(x, y);
             expect(newPrice).to.eq(lastPrice);
         });
     });
@@ -185,7 +186,7 @@ describe('ByteAndCollect', ()=>{
         it("Should batch data get",async () => {
             await gameContract.updateMaxCellSize(10);
             const a = await gameContract.getCellBatch();
-            console.log(a);
+            //console.log(a);
         });
         /* 
         await expect(stakeContract.connect(user1).updateRewardPerSecond(poolRewardBanana.id, 0, updatedRewardPerSecond))
@@ -195,16 +196,25 @@ describe('ByteAndCollect', ()=>{
     });
 
     describe('Fail Test', () => {
+        /*
         it("Cell coordinate should not smaller 1", async() => {
-            await expect(gameContract.connect(user1).attackCell(0,1))
+            //let newCellPrice1 = await gameContract.getCellNewPrice(0,1);
+
+            await expect(gameContract.connect(user1).attackCell(-1,1, {
+                value: ethers.BigNumber.from("1000000000")
+            }))
                 .to.be
                 .revertedWith('Selected cell is not valid.');
 
-            await expect(gameContract.connect(user1).attackCell(1,0))
+            //let newCellPrice = await gameContract.getCellNewPrice(1,0);
+
+            await expect(gameContract.connect(user1).attackCell(1,-1, {
+                value: ethers.BigNumber.from("1000000000")
+            }))
                 .to.be
                 .revertedWith('Selected cell is not valid.');
         });
-
+        */
         it("Cell coordinate should not bigger than maxCellSize", async() => {
             let maxCellSize = await gameContract.getMaxCellSize();
             await expect(gameContract.connect(user1).attackCell(maxCellSize + 1, 1))
