@@ -32,12 +32,12 @@ async function main() {
   const randomCellPrice = await gameContract.getCellLastPrice(0, 0);
   console.log("0x0 Cell price: " + randomCellPrice);
 
-  /*await web3.eth.sendTransaction({
-        from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
-        to: "0xc07f279c6aCd79Fc63752aE917b052780B0Ca132",
-        value: minCellCost,
-      });
-    */
+  /*await ethers.sendTransaction({
+    from: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+    to: "0xc07f279c6aCd79Fc63752aE917b052780B0Ca132",
+    value: minCellCost,
+  });
+  */
   //0xc07f279c6aCd79Fc63752aE917b052780B0Ca132
 }
 

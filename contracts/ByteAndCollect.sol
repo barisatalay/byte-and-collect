@@ -56,10 +56,15 @@ contract ByteAndCollect is Context, Ownable {
     /// @notice     Bu metod ile seçilen hücreyi kullanıcı satın alır(saldırır)
     /// @param  _x  Horizontal position
     /// @param  _y  Vertical position
-    function attackCell(uint16 _x, uint16 _y) public payable checkLock(_x, _y) {
+    function attackCell(uint16 _x, uint16 _y)
+        public
+        payable
+        checkLock(_x, _y)
+        returns (uint256)
+    {
         require(emergency == false, "Operations canceled due to an emergency.");
         require(
-            _x > 0 && _y > 0 && _x <= maxCellSize && _y <= maxCellSize,
+            _x >= 0 && _y >= 0 && _x <= maxCellSize && _y <= maxCellSize,
             "Selected cell is not valid."
         );
         require(
@@ -101,6 +106,7 @@ contract ByteAndCollect is Context, Ownable {
         // ..:: Updating cell information ::..
 
         emit CellConquered(_x, _y, _msgSender(), calculatedCellPrice);
+        return calculatedCellPrice;
     }
 
     /// @notice                 Calculates the commission share for the development of the contract and the investments it will make.
